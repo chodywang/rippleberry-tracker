@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Rippleberry EP Tracker</title>
+<link rel="icon" type="image/png" href="https://rippleberryband.com/wp-content/uploads/2024/05/cropped-updated-site-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0f0f0f;
+    --surface-2: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #f5f5f5;
+    --text-dim: #a0a0a0;
+    --text-faint: #606060;
+    --green: #c6e870;
+    --violet: #8b5fd4;
+    --cyan: #4fd4e4;
+    --magenta: #e8639c;
+    --red: #ff5858;
+    --yellow: #ffcc4a;
+    --display: 'Bowlby One', Impact, sans-serif;
+    --body: 'Fraunces', Georgia, serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 16px; line-height: 1.5; overflow-x: hidden; }
+  body { min-height: 100vh; padding-bottom: 80px; }
+
+  /* Header */
+  header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 12px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { width: 28px; height: 28px; }
+  .brand .title { font-family: var(--display); color: var(--green); font-size: 18px; letter-spacing: 0.5px; }
+  .brand .sub { font-family: var(--mono); color: var(--text-faint); font-size: 11px; margin-left: auto; }
+
+  /* Tabs */
+  nav.tabs { display: flex; overflow-x: auto; gap: 4px; padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border); scrollbar-width: none; position: sticky; top: 53px; z-index: 99; }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  nav.tabs button { flex-shrink: 0; background: none; border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.5px; }
+  nav.tabs button.active { background: var(--green); color: #000; border-color: var(--green); }
+  nav.tabs button:active { transform: scale(0.97); }
+
+  main { padding: 20px 16px 40px; max-width: 720px; margin: 0 auto; }
+
+  /* Sections */
+  section.view { display: none; }
+  section.view.active { display: block; animation: fade 0.2s ease-out; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  h1 { font-family: var(--display); font-size: 28px; letter-spacing: 0.5px; margin-bottom: 4px; }
+  h2 { font-family: var(--display); font-size: 20px; letter-spacing: 0.5px; margin: 24px 0 12px; color: var(--green); }
+  h3 { font-family: var(--display); font-size: 15px; letter-spacing: 0.5px; margin: 16px 0 8px; color: var(--text); }
+  p { color: var(--text-dim); margin-bottom: 12px; }
+
+  /* Countdown */
+  .countdown { background: linear-gradient(135deg, #0a1a05, #000); border: 1px solid var(--green); border-radius: 16px; padding: 20px 16px; text-align: center; margin-bottom: 20px; }
+  .countdown-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .countdown-days { font-family: var(--display); font-size: 60px; color: var(--green); line-height: 1; letter-spacing: 1px; }
+  .countdown-units { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; letter-spacing: 1px; }
+  .countdown-date { font-family: var(--mono); font-size: 13px; color: var(--text); margin-top: 10px; font-weight: 600; }
+
+  /* Workstream progress bars */
+  .ws-progress { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .ws-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .ws-progress-name { font-family: var(--display); font-size: 15px; letter-spacing: 0.5px; }
+  .ws-progress-pct { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .ws-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .ws-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .ws-progress.music .ws-progress-name, .ws-progress.music .ws-progress-pct { color: var(--green); }
+  .ws-progress.music .ws-bar-fill { background: var(--green); }
+  .ws-progress.materials .ws-progress-name, .ws-progress.materials .ws-progress-pct { color: var(--violet); }
+  .ws-progress.materials .ws-bar-fill { background: var(--violet); }
+  .ws-progress.marketing .ws-progress-name, .ws-progress.marketing .ws-progress-pct { color: var(--cyan); }
+  .ws-progress.marketing .ws-bar-fill { background: var(--cyan); }
+  .ws-progress-counts { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 6px; }
+
+  /* Gate cards */
+  .gate-card { background: var(--surface); border: 1px solid var(--magenta); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .gate-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .gate-id { font-family: var(--mono); font-size: 11px; color: var(--magenta); font-weight: 600; }
+  .gate-date { font-family: var(--mono); font-size: 12px; color: var(--text); font-weight: 600; }
+  .gate-name { font-family: var(--body); font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .gate-owner { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+
+  /* Active cards */
+  .active-list { display: flex; flex-direction: column; gap: 8px; }
+  .active-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; transition: background 0.15s; }
+  .active-card:active { background: var(--surface-2); }
+  .active-card .ac-left { min-width: 0; flex: 1; }
+  .active-card .ac-id { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-bottom: 2px; }
+  .active-card .ac-name { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .active-card .ac-right { text-align: right; flex-shrink: 0; }
+  .active-card .ac-owner { font-family: var(--mono); font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .active-card .ac-due { font-family: var(--mono); font-size: 10px; color: var(--text-faint); }
+
+  /* Update button */
+  .update-cta { display: block; background: var(--green); color: #000; border: none; border-radius: 12px; padding: 14px 20px; width: 100%; font-family: var(--display); font-size: 15px; letter-spacing: 0.5px; margin: 20px 0; cursor: pointer; text-decoration: none; text-align: center; }
+  .update-cta:active { transform: scale(0.98); }
+  .update-cta small { display: block; font-family: var(--mono); font-size: 10px; font-weight: normal; letter-spacing: 0.5px; margin-top: 2px; opacity: 0.8; }
+  .update-panel { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; width: 100%; font-family: var(--display); font-size: 15px; color: var(--green); letter-spacing: 0.5px; margin: 20px 0; text-align: center; box-sizing: border-box; }
+  .update-panel small { display: block; font-family: var(--mono); font-size: 10px; font-weight: normal; color: var(--text-dim); letter-spacing: 0.5px; margin-top: 4px; }
+  .vol-claim-note { display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--text-dim); font-style: italic; padding: 4px 0; }
+
+  /* Me filter */
+  .me-filter { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; margin-bottom: 12px; scrollbar-width: none; }
+  .me-filter::-webkit-scrollbar { display: none; }
+  .me-filter button { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono); font-size: 11px; padding: 6px 10px; border-radius: 14px; cursor: pointer; }
+  .me-filter button.active { background: var(--green); color: #000; border-color: var(--green); }
+
+  /* Gantt */
+  .gantt-legend { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-bottom: 12px; }
+  .gantt-legend span { display: flex; align-items: center; gap: 4px; }
+  .gantt-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .gantt-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .gantt-scale { display: grid; min-width: 900px; font-family: var(--mono); font-size: 9px; color: var(--text-faint); margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .gantt-scale div { text-align: center; padding: 2px 0; border-left: 1px solid var(--border); }
+  .gantt-row { display: grid; min-width: 900px; align-items: center; padding: 3px 0; position: relative; min-height: 22px; }
+  .gantt-row:hover { background: rgba(255,255,255,0.02); }
+  .gantt-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+  .gantt-bar { height: 14px; border-radius: 3px; cursor: pointer; position: relative; }
+  .gantt-bar.music { background: var(--green); }
+  .gantt-bar.materials { background: var(--violet); }
+  .gantt-bar.marketing { background: var(--cyan); }
+  .gantt-bar.done { opacity: 0.4; }
+  .gantt-bar.blocked { opacity: 0.3; background: var(--text-faint) !important; }
+  .gantt-bar.gate { background: var(--magenta) !important; height: 14px; width: 14px !important; border-radius: 50%; }
+  .gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--red); z-index: 1; pointer-events: none; }
+
+  /* Workstreams view - narrative + expandable */
+  .ws-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+  .ws-card.music { border-left: 4px solid var(--green); }
+  .ws-card.materials { border-left: 4px solid var(--violet); }
+  .ws-card.marketing { border-left: 4px solid var(--cyan); }
+  .ws-card-header { padding: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .ws-card-title { font-family: var(--display); font-size: 18px; letter-spacing: 0.5px; }
+  .ws-card.music .ws-card-title { color: var(--green); }
+  .ws-card.materials .ws-card-title { color: var(--violet); }
+  .ws-card.marketing .ws-card-title { color: var(--cyan); }
+  .ws-card-caret { font-family: var(--mono); font-size: 14px; color: var(--text-dim); transition: transform 0.2s; }
+  .ws-card.expanded .ws-card-caret { transform: rotate(90deg); }
+  .ws-card-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+  .ws-card.expanded .ws-card-body { display: block; }
+  .ws-card-body p { font-size: 14px; color: var(--text-dim); margin: 12px 0; }
+
+  .sws { margin-top: 14px; }
+  .sws-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .sws-title { font-family: var(--display); font-size: 12px; letter-spacing: 0.5px; color: var(--text); }
+  .sws-meta { font-family: var(--mono); font-size: 10px; color: var(--text-faint); }
+  .sws-dates { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-bottom: 8px; }
+
+  .dlv { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .dlv:last-child { border-bottom: none; }
+  .dlv:active { background: var(--surface-2); }
+  .dlv-left { min-width: 0; }
+  .dlv-id { font-family: var(--mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.5px; }
+  .dlv-name { font-size: 12px; color: var(--text); margin: 2px 0; }
+  .dlv-name.gate { color: var(--magenta); font-weight: 600; }
+  .dlv-blocked { font-family: var(--mono); font-size: 9px; color: var(--text-faint); }
+  .dlv-right { text-align: right; flex-shrink: 0; }
+  .dlv-status { font-size: 16px; }
+  .dlv-owner { font-family: var(--mono); font-size: 10px; color: var(--text-dim); font-weight: 600; margin-top: 2px; }
+  .dlv-owner.tbd { color: var(--yellow); }
+  .dlv-owner.band { color: var(--magenta); }
+  .dlv-due { font-family: var(--mono); font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+  .dlv-due.overdue { color: var(--red); }
+
+  /* Budget */
+  .budget-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .budget-total { font-family: var(--display); font-size: 22px; color: var(--green); margin-bottom: 4px; }
+  .budget-detail { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+  .budget-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .budget-line:last-child { border-bottom: none; }
+  .budget-line .label { color: var(--text); }
+  .budget-line .amount { font-family: var(--mono); font-weight: 600; color: var(--green); }
+  .budget-note { font-size: 12px; color: var(--text-dim); font-style: italic; margin-top: 12px; padding: 10px; background: var(--surface); border-radius: 8px; border-left: 2px solid var(--yellow); }
+
+  /* Decision log */
+  .dec-locked { background: var(--surface); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+
+  /* Modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow-y: auto; }
+  .modal-bg.open { display: flex; align-items: flex-start; justify-content: center; padding-top: 60px; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 420px; width: 100%; padding: 20px; }
+  .modal-close { float: right; background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; padding: 0; line-height: 1; }
+  .modal h3 { font-family: var(--display); color: var(--green); margin-bottom: 4px; }
+  .modal-id { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-bottom: 12px; }
+  .modal-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .modal-row:last-child { border-bottom: none; }
+  .modal-row .label { color: var(--text-dim); font-family: var(--mono); font-size: 11px; text-transform: uppercase; }
+
+  /* Footer */
+  footer { padding: 20px 16px; text-align: center; color: var(--text-faint); font-family: var(--mono); font-size: 10px; }
+
+  /* Volunteer */
+  .vol-card { background: var(--surface); border: 1px dashed var(--yellow); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .vol-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .vol-id { font-family: var(--mono); font-size: 10px; color: var(--yellow); font-weight: 600; }
+  .vol-due { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+  .vol-name { font-size: 13px; margin-bottom: 8px; }
+  .vol-claim { display: inline-block; background: var(--yellow); color: #000; border: none; padding: 6px 12px; border-radius: 14px; font-family: var(--mono); font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-faint); font-family: var(--mono); font-size: 12px; }
+
+  /* Gantt bar inline label */
+  .gantt-bar-label { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 10px; white-space: nowrap; color: #000; font-weight: 600; letter-spacing: 0.2px; pointer-events: none; padding-right: 8px; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 16px); }
+  .gantt-bar.blocked .gantt-bar-label, .gantt-bar.scheduled .gantt-bar-label { color: var(--text-dim); }
+  .gantt-bar.done .gantt-bar-label { color: #000; opacity: 0.85; }
+  .gantt-bar.gate .gantt-bar-label { color: #000; }
+
+  /* Gantt legend */
+  .gantt-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 14px 0; font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; }
+  .legend-swatch.status-active { background: var(--green); }
+  .legend-swatch.status-blocked { background: #555; opacity: 0.5; }
+  .legend-swatch.status-scheduled { background: #666; }
+  .legend-swatch.status-done { background: var(--green); opacity: 0.4; }
+  .legend-swatch.status-gate { background: var(--magenta); }
+
+  /* Budget & Spend Tracker table */
+  .budget-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-family: var(--sans); }
+  .budget-table th, .budget-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
+  .budget-table th { font-family: var(--mono); font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .budget-table td.num { font-family: var(--mono); text-align: right; }
+  .budget-table tr.total td { font-weight: 700; color: var(--green); border-top: 2px solid var(--green); border-bottom: none; padding-top: 12px; }
+  .budget-status-pill { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.08); color: var(--text-dim); }
+
+
+  .gantt-label-id { font-family: var(--mono); font-size: 9px; color: var(--yellow); letter-spacing: 0.3px; font-weight: 600; }
+  .gantt-label-name { font-family: var(--sans); font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+
+
+  /* Overdue: active cards */
+  .active-card.overdue { border-left: 3px solid var(--red, #ff5454); background: rgba(255,84,84,0.06); }
+  .ac-due.overdue { color: var(--red, #ff5454) !important; font-weight: 600; }
+  .ac-due.due-today { color: var(--yellow, #f4c842) !important; font-weight: 600; }
+
+  /* Overdue: gantt bars get a red outline */
+  .gantt-bar.overdue { outline: 2px solid var(--red, #ff5454); outline-offset: 1px; }
+  .gantt-bar.overdue.blocked { opacity: 0.6 !important; }
+
+  /* Legend entry for overdue */
+  .legend-swatch.status-overdue { background: transparent; border: 2px solid var(--red, #ff5454); }
+
+
+  /* Overdue banner on home */
+  .overdue-wrap { background: rgba(255,88,88,0.08); border: 1px solid var(--red); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+  .overdue-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .overdue-icon { font-size: 18px; }
+  .overdue-title { font-family: var(--mono); font-size: 13px; color: var(--red); font-weight: 700; letter-spacing: 0.3px; }
+  .overdue-list { display: flex; flex-direction: column; gap: 6px; }
+  .overdue-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(0,0,0,0.25); border-left: 3px solid var(--red); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+  .overdue-item:hover { background: rgba(0,0,0,0.4); }
+  .od-left { flex: 1; min-width: 0; }
+  .od-id { font-family: var(--mono); font-size: 9px; color: var(--red); font-weight: 600; letter-spacing: 0.3px; }
+  .od-name { font-family: var(--sans); font-size: 13px; color: #fff; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .od-right { text-align: right; flex-shrink: 0; }
+  .od-owner { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+  .od-late { font-family: var(--mono); font-size: 11px; color: var(--red); font-weight: 700; margin-top: 2px; }
+
+  /* BAND filter button — distinct styling */
+  .me-filter button[data-band] { background: rgba(200,100,255,0.12); border-color: var(--magenta, #c864ff); color: var(--magenta, #c864ff); }
+  .me-filter button[data-band].active { background: var(--magenta, #c864ff); color: #000; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="https://rippleberryband.com/wp-content/uploads/2024/05/cropped-updated-site-icon.png" alt="Rippleberry">
+    <div class="title">EP TRACKER</div>
+    <div class="sub" id="lastUpdated">—</div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-view="home" class="active">Home</button>
+  <button data-view="gantt">Gantt</button>
+  <button data-view="workstreams">Workstreams</button>
+  <button data-view="decisions">Decisions</button>
+  <button data-view="budget">Budget &amp; Spend</button>
+  <button data-view="volunteer">Volunteer Board</button>
+  <button data-view="updates">Updates</button>
+</nav>
+
+<main>
+
+  <!-- HOME VIEW -->
+  <section class="view active" id="view-home">
+    <div class="countdown">
+      <div class="countdown-label">Days to June 12</div>
+      <div class="countdown-days" id="cdDays">—</div>
+      <div class="countdown-units">DAYS</div>
+      <div class="countdown-date">Fri Jun 12 · EP drops + release show @ White Tiger</div>
+    </div>
+
+    <!-- Overdue banner (hidden by default, shown if anything overdue) -->
+    <div id="overdueWrap" class="overdue-wrap" style="display:none">
+      <div class="overdue-header">
+        <span class="overdue-icon">⚠</span>
+        <span class="overdue-title">Overdue — <span id="overdueCount">0</span> behind schedule</span>
+      </div>
+      <div id="overdueList" class="overdue-list"></div>
+    </div>
+
+    <h2>Progress</h2>
+    <div id="progressWrap"></div>
+
+    <h2>Next Gates</h2>
+    <div id="gatesList"></div>
+
+    <h2>Active Right Now</h2>
+    <div class="me-filter" id="meFilter"></div>
+    <div class="active-list" id="activeList"></div>
+
+    <div class="update-panel">
+      Text Cody for updates
+      <small>At practice · by text · after the show</small>
+    </div>
+  </section>
+
+  <!-- UPDATES VIEW -->
+  <section class="view" id="view-updates">
+    <h1>Recent Updates</h1>
+    <p>Changelog of tracker + plan changes, newest first.</p>
+    <div id="recentList"></div>
+  </section>
+
+  <!-- GANTT VIEW -->
+  <section class="view" id="view-gantt">
+    <h1>Timeline</h1>
+    <div class="gantt-legend">
+      <div class="legend-item"><span class="legend-swatch status-active"></span>Active</div>
+      <div class="legend-item"><span class="legend-swatch status-blocked"></span>Blocked (waiting on dependency)</div>
+      <div class="legend-item"><span class="legend-swatch status-scheduled"></span>Scheduled</div>
+      <div class="legend-item"><span class="legend-swatch status-done"></span>Done</div>
+      <div class="legend-item"><span class="legend-swatch status-gate"></span>Gate (decision point)</div>
+      <div class="legend-item"><span class="legend-swatch status-overdue"></span>Overdue (past due, not done)</div>
+    </div>
+    <p>Swipe horizontally to see the full timeline. Tap a bar for details.</p>
+    <div class="gantt-legend">
+      <span><span class="dot" style="background:var(--green)"></span>Music</span>
+      <span><span class="dot" style="background:var(--violet)"></span>Materials</span>
+      <span><span class="dot" style="background:var(--cyan)"></span>Marketing</span>
+      <span><span class="dot" style="background:var(--magenta); border-radius:50%"></span>Gate</span>
+      <span><span class="dot" style="background:var(--red)"></span>Today</span>
+    </div>
+    <div class="gantt-wrap" id="ganttWrap"></div>
+  </section>
+
+  <!-- WORKSTREAMS VIEW -->
+  <section class="view" id="view-workstreams">
+    <h1>Workstreams</h1>
+    <p>Tap a workstream to expand. Tap any deliverable for details.</p>
+    <div id="workstreamCards"></div>
+  </section>
+
+  <!-- DECISIONS VIEW -->
+  <section class="view" id="view-decisions">
+    <h1>Decisions & Gates</h1>
+    <p>Every decision that needs to be made, with deadline and owner.</p>
+
+    <h2>Open Gates</h2>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:-8px">Decision points that gate downstream work. Miss these and the schedule compresses.</p>
+    <div id="openGatesList"></div>
+
+    <h2>Open Decisions</h2>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:-8px">Decisions the band still needs to make — no hard gate, but they unblock work.</p>
+    <div id="openDecisionsList"></div>
+
+    <h2>Locked Decisions</h2>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:-8px">Already decided at the Apr 19 workshop.</p>
+    <div id="lockedList"></div>
+  </section>
+
+  <!-- BUDGET VIEW -->
+  <section class="view" id="view-budget">
+    <h1>Budget &amp; Spend Tracker</h1>
+    <p>Band fund projections. Updated as gigs pay out and expenses hit.</p>
+    <div id="budgetContent"></div>
+  </section>
+
+  <!-- VOLUNTEER BOARD VIEW -->
+  <section class="view" id="view-volunteer">
+    <h1>Volunteer Board</h1>
+    <p>Work items without an owner.</p>
+    <div id="volunteerList"></div>
+  </section>
+
+</main>
+
+<footer>
+  Rippleberry EP Tracker · <span id="footerDate"></span>
+</footer>
+
+<!-- Deliverable detail modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-id" id="modalId">—</div>
+    <h3 id="modalName">—</h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- DATA: update this block to push updates -->
+<script id="data" type="application/json">
+{"meta":{"version":"v4.1","lastUpdated":"2026-04-20","releaseDate":"2026-06-12","workshopDate":"2026-04-19"},"bandMembers":["All","BAND","Cody","Dave","Pearce","Ben","Connor"],"workstreams":{"music":{"name":"Music","emoji":"🎵","color":"music","narrative":"Tracking first (most instruments already done — see progress), then Pearce finishes remaining guitar work by Apr 26. Pearce gets one week to attempt mixing. May 3 gate decides: continue Pearce or hand off to Evan (Dave's contact, pre-validated with quote by Apr 22). Mastering is a separate phase regardless of who mixes. Upload to DistroKid by May 27 for 16-day buffer to June 12 release.","subworkstreams":[{"id":"tracking","name":"Tracking","dates":"Apr 20 – Apr 26"},{"id":"mix","name":"Mix","dates":"Apr 27 – May 16"},{"id":"master","name":"Master","dates":"May 17 – May 22"},{"id":"distribution","name":"Distribution","dates":"May 22 – May 29"}]},"materials":{"name":"Materials","emoji":"🎨","color":"materials","narrative":"Six independent sub-workstreams running in parallel. Photos (hired shoot May 10 for EPK + live capture June 12). Album Art (Pearce drafts by May 8, band review May 9, final + Spotify dynamic mark May 17). Video (three-phase per song: Dave rough edit → Pearce Cake Burger effects → Dave final edit + upload). Merch (all ordered May 29 — shirts, two posters, CDs, stickers if committed). EPK (research first, Connor writes copy, three-version rollout). Website (band decides hire vs DIY by Apr 24).","subworkstreams":[{"id":"photos","name":"Photos","dates":"Apr 20 – Jun 12"},{"id":"albumart","name":"Album Art","dates":"Apr 20 – May 17"},{"id":"video","name":"Video","dates":"May 6 – Jun 5"},{"id":"merch","name":"Merch","dates":"May 15 – May 29"},{"id":"epk","name":"EPK","dates":"Apr 24 – Jun 17"},{"id":"website","name":"Website","dates":"Apr 24 – May 29"}]},"marketing":{"name":"Marketing","emoji":"📣","color":"marketing","narrative":"Three sub-workstreams. Social runs weekly now (Connor posts 1–2 shorts/week, Pearce adds Cake Burger effects). Paid Ads is being fully redesigned — Cody briefs the band on Eric Neumann's proposal by Thu Apr 23, then a volunteer researches + designs the full campaign (Apr 24–30), band approves May 1, and execution runs in 3 phases through Jun 12. Release Campaign runs parallel: Erik Dolliver lights confirm (Apr 22), Matt cross-promo, label/track name decisions, pre-save arc, release day blast. Light-touch philosophy throughout — 'come see us' not 'please pre-save'.","subworkstreams":[{"id":"social","name":"Social","dates":"Apr 20 – ongoing"},{"id":"paidads","name":"Campaign Design + Execution","dates":"Apr 20 – Jun 11"},{"id":"release","name":"Release Campaign","dates":"Apr 22 – Jun 12"}]}},"deliverables":[{"id":"M-TRK-DONE-DAVEGTR-FD","ws":"music","sws":"tracking","name":"Dave guitar — Flying Dutchman","owner":"Dave","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-DAVEGTR-TW","ws":"music","sws":"tracking","name":"Dave guitar — The Web","owner":"Dave","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-DAVEGTR-BB","ws":"music","sws":"tracking","name":"Dave guitar — Bubinga","owner":"Dave","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-KEYS-FD","ws":"music","sws":"tracking","name":"Keys — Flying Dutchman","owner":"Cody","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-KEYS-TW","ws":"music","sws":"tracking","name":"Keys — The Web","owner":"Cody","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-KEYS-BB","ws":"music","sws":"tracking","name":"Keys — Bubinga","owner":"Cody","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-DRUMS-FD","ws":"music","sws":"tracking","name":"Drums — Flying Dutchman","owner":"Connor","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-DRUMS-TW","ws":"music","sws":"tracking","name":"Drums — The Web","owner":"Connor","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-DRUMS-BB","ws":"music","sws":"tracking","name":"Drums — Bubinga","owner":"Connor","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-BASS-FD","ws":"music","sws":"tracking","name":"Bass — Flying Dutchman","owner":"Ben","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-BASS-TW","ws":"music","sws":"tracking","name":"Bass — The Web","owner":"Ben","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-BASS-BB","ws":"music","sws":"tracking","name":"Bass — Bubinga","owner":"Ben","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-VOX-FD","ws":"music","sws":"tracking","name":"Vocals — Flying Dutchman","owner":"Band","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-VOX-TW","ws":"music","sws":"tracking","name":"Vocals — The Web","owner":"Band","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-DONE-VOX-BB","ws":"music","sws":"tracking","name":"Vocals — Bubinga","owner":"Band","due":"2026-04-15","start":"2026-03-01","status":"done","blockedBy":[],"isGate":false},{"id":"M-TRK-1","ws":"music","sws":"tracking","name":"Record remaining guitar — Flying Dutchman","owner":"Pearce","due":"2026-04-26","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"M-TRK-2","ws":"music","sws":"tracking","name":"Record remaining guitar — The Web","owner":"Pearce","due":"2026-04-26","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"M-TRK-3","ws":"music","sws":"tracking","name":"Record remaining guitar — Bubinga (incl. lead riff w/ new guitar)","owner":"Pearce","due":"2026-04-26","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"M-MIX-0","ws":"music","sws":"mix","name":"Get Evan quote + timeline","owner":"Dave","due":"2026-04-22","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"M-MIX-1","ws":"music","sws":"mix","name":"Pearce mix trial week","owner":"Pearce","due":"2026-05-02","start":"2026-04-27","status":"blocked","blockedBy":["M-TRK-1","M-TRK-2","M-TRK-3"],"isGate":false},{"id":"M-MIX-GATE","ws":"music","sws":"mix","name":"GATE: Mix path — Pearce OR Evan","owner":"BAND","due":"2026-05-03","start":"2026-05-03","status":"blocked","blockedBy":["M-MIX-1"],"isGate":true},{"id":"M-MIX-2","ws":"music","sws":"mix","name":"Mix — Flying Dutchman (final)","owner":"Pearce OR Evan (decides May 3)","due":"2026-05-16","start":"2026-05-04","status":"blocked","blockedBy":["M-MIX-GATE"],"isGate":false},{"id":"M-MIX-3","ws":"music","sws":"mix","name":"Mix — The Web (final)","owner":"Pearce OR Evan (decides May 3)","due":"2026-05-16","start":"2026-05-04","status":"blocked","blockedBy":["M-MIX-GATE"],"isGate":false},{"id":"M-MIX-4","ws":"music","sws":"mix","name":"Mix — Bubinga (final)","owner":"Pearce OR Evan (decides May 3)","due":"2026-05-16","start":"2026-05-04","status":"blocked","blockedBy":["M-MIX-GATE"],"isGate":false},{"id":"M-MAS-1","ws":"music","sws":"master","name":"Master all 3 tracks","owner":"Pearce OR Evan (decides May 3)","due":"2026-05-22","start":"2026-05-17","status":"blocked","blockedBy":["M-MIX-2","M-MIX-3","M-MIX-4"],"isGate":false},{"id":"M-DIST-1","ws":"music","sws":"distribution","name":"Upload to DistroKid (audio + metadata + art)","owner":"Dave","due":"2026-05-27","start":"2026-05-22","status":"blocked","blockedBy":["M-MAS-1","MT-ART-2"],"isGate":false},{"id":"M-DIST-2","ws":"music","sws":"distribution","name":"Pre-save link active","owner":"Dave","due":"2026-05-27","start":"2026-05-22","status":"blocked","blockedBy":["M-DIST-1"],"isGate":false},{"id":"MT-PHOTO-1","ws":"materials","sws":"photos","name":"Book hired photographer (May 10 shoot)","owner":"Cody","due":"2026-04-22","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MT-PHOTO-2","ws":"materials","sws":"photos","name":"Hired photo shoot (band + multiple outfits)","owner":"Photographer + band","due":"2026-05-10","start":"2026-05-10","status":"blocked","blockedBy":["MT-PHOTO-1"],"isGate":false},{"id":"MT-PHOTO-3","ws":"materials","sws":"photos","name":"Deliver edited photos","owner":"Photographer","due":"2026-05-14","start":"2026-05-10","status":"blocked","blockedBy":["MT-PHOTO-2"],"isGate":false},{"id":"MT-PHOTO-4","ws":"materials","sws":"photos","name":"Book Jun 12 release show photographer","owner":"TBD","due":"2026-05-18","start":"2026-05-04","status":"active","blockedBy":[],"isGate":false},{"id":"MT-PHOTO-5","ws":"materials","sws":"photos","name":"Jun 12 live show photos captured","owner":"Release show photographer","due":"2026-06-12","start":"2026-06-12","status":"blocked","blockedBy":["MT-PHOTO-4"],"isGate":false},{"id":"MT-ART-1","ws":"materials","sws":"albumart","name":"Album art drafts (for band review)","owner":"Pearce","due":"2026-05-08","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MT-ART-GATE","ws":"materials","sws":"albumart","name":"Band review + feedback","owner":"BAND","due":"2026-05-09","start":"2026-05-09","status":"blocked","blockedBy":["MT-ART-1"],"isGate":true},{"id":"MT-ART-2","ws":"materials","sws":"albumart","name":"Final album art","owner":"Pearce","due":"2026-05-17","start":"2026-05-10","status":"blocked","blockedBy":["MT-ART-GATE"],"isGate":false},{"id":"MT-ART-3","ws":"materials","sws":"albumart","name":"Spotify dynamic album mark","owner":"Pearce","due":"2026-05-17","start":"2026-05-10","status":"blocked","blockedBy":["MT-ART-GATE"],"isGate":false},{"id":"MT-VID-1","ws":"materials","sws":"video","name":"Bubinga band playthrough shoot (at practice)","owner":"Dave (filming) + band","due":"2026-05-06","start":"2026-05-06","status":"active","blockedBy":[],"isGate":false},{"id":"MT-VID-GATE","ws":"materials","sws":"video","name":"GATE: Cake Burger effects scope (which video(s))","owner":"Pearce","due":"2026-05-09","start":"2026-05-09","status":"active","blockedBy":[],"isGate":true},{"id":"MT-VID-2a","ws":"materials","sws":"video","name":"Dave rough edit — Flying Dutchman","owner":"Dave","due":"2026-05-10","start":"2026-05-03","status":"active","blockedBy":[],"isGate":false},{"id":"MT-VID-2b","ws":"materials","sws":"video","name":"Pearce Cake Burger effects — Flying Dutchman","owner":"Pearce","due":"2026-06-01","start":"2026-05-10","status":"blocked","blockedBy":["MT-VID-2a","MT-VID-GATE"],"isGate":false},{"id":"MT-VID-2c","ws":"materials","sws":"video","name":"Dave final edit + upload — Flying Dutchman","owner":"Dave","due":"2026-06-05","start":"2026-06-01","status":"blocked","blockedBy":["MT-VID-2b"],"isGate":false},{"id":"MT-VID-3a","ws":"materials","sws":"video","name":"Dave rough edit — The Web","owner":"Dave","due":"2026-05-17","start":"2026-05-10","status":"active","blockedBy":[],"isGate":false},{"id":"MT-VID-3b","ws":"materials","sws":"video","name":"Pearce Cake Burger effects — The Web","owner":"Pearce","due":"2026-06-01","start":"2026-05-17","status":"blocked","blockedBy":["MT-VID-3a","MT-VID-GATE"],"isGate":false},{"id":"MT-VID-3c","ws":"materials","sws":"video","name":"Dave final edit + upload — The Web","owner":"Dave","due":"2026-06-05","start":"2026-06-01","status":"blocked","blockedBy":["MT-VID-3b"],"isGate":false},{"id":"MT-VID-4a","ws":"materials","sws":"video","name":"Dave rough edit — Bubinga","owner":"Dave","due":"2026-05-24","start":"2026-05-17","status":"blocked","blockedBy":["MT-VID-1"],"isGate":false},{"id":"MT-VID-4b","ws":"materials","sws":"video","name":"Pearce Cake Burger effects — Bubinga","owner":"Pearce","due":"2026-06-01","start":"2026-05-24","status":"blocked","blockedBy":["MT-VID-4a","MT-VID-GATE"],"isGate":false},{"id":"MT-VID-4c","ws":"materials","sws":"video","name":"Dave final edit + upload — Bubinga","owner":"Dave","due":"2026-06-05","start":"2026-06-01","status":"blocked","blockedBy":["MT-VID-4b"],"isGate":false},{"id":"MT-SHIRT-1","ws":"materials","sws":"merch","name":"Shirt reorder (album art design)","owner":"Ben","due":"2026-05-29","start":"2026-05-18","status":"blocked","blockedBy":["MT-ART-2"],"isGate":false},{"id":"MT-POSTER-1a","ws":"materials","sws":"merch","name":"Album poster design (layout on album art)","owner":"TBD","due":"2026-05-25","start":"2026-05-18","status":"blocked","blockedBy":["MT-ART-2"],"isGate":false},{"id":"MT-POSTER-1b","ws":"materials","sws":"merch","name":"Album poster order (50-run)","owner":"TBD","due":"2026-05-29","start":"2026-05-25","status":"blocked","blockedBy":["MT-POSTER-1a"],"isGate":false},{"id":"MT-POSTER-2a","ws":"materials","sws":"merch","name":"Jun 12 release show poster design","owner":"TBD","due":"2026-05-25","start":"2026-05-18","status":"blocked","blockedBy":["MT-ART-2"],"isGate":false},{"id":"MT-POSTER-2b","ws":"materials","sws":"merch","name":"Jun 12 release show poster order","owner":"TBD","due":"2026-05-29","start":"2026-05-25","status":"blocked","blockedBy":["MT-POSTER-2a"],"isGate":false},{"id":"MT-CD-1","ws":"materials","sws":"merch","name":"CDs (15-unit run)","owner":"TBD","due":"2026-05-29","start":"2026-05-22","status":"blocked","blockedBy":["M-MAS-1","MT-ART-2"],"isGate":false},{"id":"MT-STICKER-GATE","ws":"materials","sws":"merch","name":"GATE: Stickers yes/kill?","owner":"BAND","due":"2026-05-22","start":"2026-05-15","status":"blocked","blockedBy":[],"isGate":true},{"id":"MT-STICKER-1","ws":"materials","sws":"merch","name":"Stickers (if yes)","owner":"TBD","due":"2026-05-29","start":"2026-05-22","status":"blocked","blockedBy":["MT-STICKER-GATE","MT-ART-2"],"isGate":false},{"id":"MT-EPK-0","ws":"materials","sws":"epk","name":"EPK research + inspo references (find 3–5 example EPKs)","owner":"TBD","due":"2026-04-26","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MT-EPK-GATE","ws":"materials","sws":"epk","name":"GATE: EPK format decision (based on research)","owner":"BAND","due":"2026-04-26","start":"2026-04-25","status":"blocked","blockedBy":["MT-EPK-0"],"isGate":true},{"id":"MT-COPY-1","ws":"materials","sws":"epk","name":"EPK copy (bio short + long, one-liner)","owner":"Connor","due":"2026-05-15","start":"2026-04-27","status":"blocked","blockedBy":["MT-EPK-GATE"],"isGate":false},{"id":"MT-EPK-1","ws":"materials","sws":"epk","name":"EPK v1 assembly (existing photos + copy)","owner":"Cody + Eric Neumann","due":"2026-05-22","start":"2026-05-16","status":"blocked","blockedBy":["MT-COPY-1"],"isGate":false},{"id":"MT-EPK-2","ws":"materials","sws":"epk","name":"EPK v2 (May 10 photos swapped in)","owner":"Cody","due":"2026-05-29","start":"2026-05-22","status":"blocked","blockedBy":["MT-PHOTO-3","MT-EPK-1"],"isGate":false},{"id":"MT-EPK-3","ws":"materials","sws":"epk","name":"EPK v3 refresh (Jun 12 live photos)","owner":"Cody","due":"2026-06-17","start":"2026-06-13","status":"blocked","blockedBy":["MT-PHOTO-5","MT-EPK-2"],"isGate":false},{"id":"MT-WEB-GATE","ws":"materials","sws":"website","name":"GATE: Hire contractor ($300) OR DIY?","owner":"BAND","due":"2026-04-24","start":"2026-04-20","status":"active","blockedBy":[],"isGate":true},{"id":"MT-WEB-1","ws":"materials","sws":"website","name":"Website build/refresh","owner":"Hire OR DIY (decides Apr 24)","due":"2026-05-29","start":"2026-04-27","status":"blocked","blockedBy":["MT-WEB-GATE"],"isGate":false},{"id":"MK-SOC-1a","ws":"marketing","sws":"social","name":"Shorts — week of Apr 20 (1–2 posts)","owner":"Connor","due":"2026-04-26","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MK-SOC-1b","ws":"marketing","sws":"social","name":"Shorts — week of Apr 27 (1–2 posts)","owner":"Connor","due":"2026-05-03","start":"2026-04-27","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-1c","ws":"marketing","sws":"social","name":"Shorts — week of May 4 (1–2 posts)","owner":"Connor","due":"2026-05-10","start":"2026-05-04","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-1d","ws":"marketing","sws":"social","name":"Shorts — week of May 11 (1–2 posts)","owner":"Connor","due":"2026-05-17","start":"2026-05-11","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-1e","ws":"marketing","sws":"social","name":"Shorts — week of May 18 (1–2 posts)","owner":"Connor","due":"2026-05-24","start":"2026-05-18","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-1f","ws":"marketing","sws":"social","name":"Shorts — week of May 25 (1–2 posts)","owner":"Connor","due":"2026-05-31","start":"2026-05-25","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-1g","ws":"marketing","sws":"social","name":"Shorts — week of Jun 1 (1–2 posts)","owner":"Connor","due":"2026-06-07","start":"2026-06-01","status":"scheduled","blockedBy":[],"isGate":false},{"id":"MK-SOC-2","ws":"marketing","sws":"social","name":"Add Cake Burger effects to Connor's Shorts (rolling)","owner":"Pearce","due":"2026-06-12","start":"2026-04-27","status":"blocked","blockedBy":["MK-SOC-1a"],"isGate":false},{"id":"MK-AD-1","ws":"marketing","sws":"paidads","name":"Review Eric Neumann's proposal + brief the band","owner":"Cody","due":"2026-04-23","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MK-PLAN-1","ws":"marketing","sws":"paidads","name":"Marketing campaign research + plan design","owner":"TBD","due":"2026-04-30","start":"2026-04-24","status":"scheduled","blockedBy":["MK-AD-1"],"isGate":false},{"id":"MK-PLAN-2","ws":"marketing","sws":"paidads","name":"GATE: Band review + approve marketing plan","owner":"BAND","due":"2026-05-01","start":"2026-05-01","status":"scheduled","blockedBy":["MK-PLAN-1"],"isGate":true},{"id":"MK-REL-1","ws":"marketing","sws":"release","name":"Dave → Matt WT cross-promo ask","owner":"Dave","due":"2026-04-24","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MK-REL-2","ws":"marketing","sws":"release","name":"Dave → Erik Dolliver confirm lights Jun 12","owner":"Dave","due":"2026-04-22","start":"2026-04-20","status":"active","blockedBy":[],"isGate":false},{"id":"MK-REL-3","ws":"marketing","sws":"release","name":"WT signage printed + delivered","owner":"TBD","due":"2026-06-10","start":"2026-06-01","status":"blocked","blockedBy":["MT-POSTER-2b"],"isGate":false},{"id":"MK-REL-4","ws":"marketing","sws":"release","name":"Pre-save push campaign (2-week arc)","owner":"TBD","due":"2026-06-12","start":"2026-05-29","status":"blocked","blockedBy":["M-DIST-2"],"isGate":false},{"id":"MK-REL-5","ws":"marketing","sws":"release","name":"Release day social blast","owner":"Connor + Cody","due":"2026-06-12","start":"2026-06-12","status":"blocked","blockedBy":["M-DIST-1"],"isGate":false},{"id":"MK-REL-6","ws":"marketing","sws":"release","name":"Record label name","owner":"BAND","due":"2026-05-22","start":"2026-05-04","status":"active","blockedBy":[],"isGate":false},{"id":"MK-REL-7","ws":"marketing","sws":"release","name":"Track 3 name final","owner":"BAND","due":"2026-05-22","start":"2026-05-04","status":"active","blockedBy":[],"isGate":false},{"id":"MK-REL-8","ws":"marketing","sws":"release","name":"Performance credit format","owner":"BAND","due":"2026-05-29","start":"2026-05-11","status":"active","blockedBy":[],"isGate":false},{"id":"MK-EXEC-1","ws":"marketing","sws":"paidads","name":"Marketing execution — phase 1 (scope set at May 1 gate)","owner":"TBD","due":"2026-05-15","start":"2026-05-04","status":"scheduled","blockedBy":["MK-PLAN-2"],"isGate":false},{"id":"MK-EXEC-2","ws":"marketing","sws":"paidads","name":"Marketing execution — phase 2 (scope set at May 1 gate)","owner":"TBD","due":"2026-05-29","start":"2026-05-18","status":"scheduled","blockedBy":["MK-PLAN-2"],"isGate":false},{"id":"MK-EXEC-3","ws":"marketing","sws":"paidads","name":"Marketing execution — phase 3 final push (scope set at May 1 gate)","owner":"TBD","due":"2026-06-11","start":"2026-06-01","status":"scheduled","blockedBy":["MK-PLAN-2"],"isGate":false}],"lockedDecisions":["Whole EP drops Jun 12 (no pre-release single)","Songwriting splits: 20/20/20/20/20 across all 3 tracks","Written + produced by Rippleberry","No vinyl","Light-touch marketing philosophy (no pre-save begging)","Band fund revived — next 3 gigs fund EP costs (~$1,200 pool)","May 10 hired photo shoot (non-live); Jun 12 live show photos separate","Two poster runs (album poster + June 12 show poster), both on album art","15 CDs committed","Cake Burger video effects committed (scope gate May 9)","Bubinga filmed at Wed May 6 practice","Big band decisions = joint BAND decisions"],"budget":{"bandFundExpected":1200,"lines":[{"label":"Mix + master (external, if triggered at May 3 gate)","estimate":500,"status":"conditional"},{"label":"Photo shoot (May 10)","estimate":250,"status":"planned"},{"label":"Release show photographer (Jun 12)","estimate":225,"status":"planned"},{"label":"Website (if outsourced at Apr 24 gate)","estimate":300,"status":"conditional"},{"label":"CDs (15 units)","estimate":30,"status":"planned"},{"label":"Stickers (if yes at Apr 29 gate)","estimate":75,"status":"conditional"},{"label":"Posters (two runs)","estimate":150,"status":"planned"}],"note":"Total estimate range $1,205–$1,655. Shirts self-fund via merch sales. Band fund revenue comes from Jester King 4/18 ($500), White Tiger 4/24 (~$700), Alcove Cantina 4/25. If short: Cody + Dave cover, or trim stickers / posters / live photographer."},"recentUpdates":[{"date":"2026-04-20","text":"v5: Home page restructure — BAND filter added to Active Right Now (individual filters no longer show BAND items), overdue items surface at top of home when present, Recent Updates moved to its own tab. DB fixes: MT-EPK-0 pulled in to Sun Apr 26. MT-PHOTO-4 shifted to early May (book by mid-May). MK-REL-6/7 start May 4, MK-REL-8 starts May 11 (don't need to start today). MK-SOC-2 (Cake Burger effects) now blocked on first Short shipping — unblocks once Connor posts MK-SOC-1a. Also MT-PHOTO-4 (Jun 12 release show photographer) owner → TBD — open volunteer slot, not Connor's."},{"date":"2026-04-20","text":"v4: Marketing restructure. Paid Ads expanded into full campaign design. Cody reviews Eric Neumann proposal + briefs band by Thu Apr 23 (MK-AD-1). Volunteer takes it from there — full campaign research + plan design due Apr 30 (MK-PLAN-1). Band approves May 1 (MK-PLAN-2 gate). Execution runs in 3 placeholder phases (MK-EXEC-1/2/3) with specific scope defined after the gate. Old MK-AD-2 paid ads kickoff killed — superseded by broader plan."},{"date":"2026-04-20","text":"v4: Marketing restructure. MK-AD-1 reworked — Cody now owns Eric Neumann proposal review + team brief, due Thu Apr 23 (was a gate, now research input). MK-AD-2 (paid ad kickoff) killed — paid ads are one output of a broader plan, not a standalone task. New MK-PLAN-1: TBD volunteer designs full marketing plan (paid ads + timeline + channels + whatever) Apr 24–30. New MK-PLAN-2: GATE band review + approve May 1. Execution rows for May get created after that approval — buffer by design. Marketing narrative rewritten."},{"date":"2026-04-20","text":"v2: 15 Done tracking rows added (Dave gtr/keys/drums/bass/vox × 3 songs) for progress visibility. Volunteer Board semantic fix — mix/master/website owners renamed to decision-pending format, now shows only 9 genuine volunteer slots (was 14). MK-SOC-1 split into 7 weekly rows (accurate Shorts cadence). Sticker gate pushed Apr 29 → May 22. New Open Decisions section separates non-gate BAND decisions from Gates. Gantt shows activity names + legend. Budget renamed \"Budget & Spend Tracker\" with Spent-to-Date column."},{"date":"2026-04-20","text":"v3: Overdue visual emphasis — active cards get red left-border + red due text when past due. Gantt bars get red outline when overdue. Added Overdue to Gantt legend. Top-right 'Last updated' now reads 'Data as of [date]' to distinguish from today's browser date (which drives overdue logic)."},{"date":"2026-04-19","text":"v4.1: schedule audit applied. DistroKid pulled to May 27 for buffer. Video rough edits staggered May 3/10/17 starts (Dave can begin before final mixes). MK-AD-2 blocker corrected. Release date is FIXED — gates must hold."},{"date":"2026-04-19","text":"v4 plan locked after Apr 19 band workshop. Tracker site live."}]}
+</script>
+
+<script>
+(function(){
+  const data = JSON.parse(document.getElementById('data').textContent);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const releaseDate = new Date(data.meta.releaseDate + 'T00:00:00');
+  const workshopDate = new Date(data.meta.workshopDate + 'T00:00:00');
+
+  // Helpers
+  function parseDate(s){ return new Date(s + 'T00:00:00'); }
+  function fmtDate(s){
+    const d = parseDate(s);
+    const opts = { month: 'short', day: 'numeric' };
+    return d.toLocaleDateString('en-US', opts);
+  }
+  function fmtDateLong(s){
+    const d = parseDate(s);
+    const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+    return d.toLocaleDateString('en-US', opts);
+  }
+  function daysBetween(a, b){
+    return Math.round((b - a) / (1000*60*60*24));
+  }
+  function ownerClass(o){
+    if (!o) return '';
+    const u = o.toUpperCase();
+    if (u.includes('TBD')) return 'tbd';
+    if (u.includes('BAND')) return 'band';
+    return '';
+  }
+  function statusIcon(s){
+    if (s === 'done') return '✅';
+    if (s === 'active') return '🟢';
+    if (s === 'blocked') return '🟡';
+    return '⚪';
+  }
+
+  // Countdown
+  const daysToRelease = Math.max(0, daysBetween(today, releaseDate));
+  document.getElementById('cdDays').textContent = daysToRelease;
+
+  // ============== OVERDUE BANNER (home page) ==============
+  (function renderOverdue() {
+    const overdueWrap = document.getElementById('overdueWrap');
+    if (!overdueWrap) return;
+    const overdueItems = data.deliverables.filter(d => {
+      if (d.status === 'done' || d.status === 'killed') return false;
+      return parseDate(d.due) < today;
+    }).sort((a, b) => parseDate(a.due) - parseDate(b.due));
+    if (overdueItems.length === 0) {
+      overdueWrap.style.display = 'none';
+      return;
+    }
+    overdueWrap.style.display = 'block';
+    document.getElementById('overdueCount').textContent = overdueItems.length;
+    const listEl = document.getElementById('overdueList');
+    listEl.innerHTML = '';
+    overdueItems.forEach(d => {
+      const daysLate = Math.abs(daysBetween(today, parseDate(d.due)));
+      const el = document.createElement('div');
+      el.className = 'overdue-item';
+      el.onclick = () => openModal(d);
+      el.innerHTML = `
+        <div class="od-left">
+          <div class="od-id">${d.id}</div>
+          <div class="od-name">${d.name}</div>
+        </div>
+        <div class="od-right">
+          <div class="od-owner">${d.owner}</div>
+          <div class="od-late">⚠ ${daysLate}d late</div>
+        </div>
+      `;
+      listEl.appendChild(el);
+    });
+  })();
+
+  document.getElementById('lastUpdated').textContent = 'v' + data.meta.version + ' · ' + data.meta.lastUpdated;
+  document.getElementById('footerDate').textContent = 'Data as of ' + data.meta.lastUpdated;
+
+  // Progress per workstream
+  const progressWrap = document.getElementById('progressWrap');
+  Object.keys(data.workstreams).forEach(wsKey => {
+    const ws = data.workstreams[wsKey];
+    const items = data.deliverables.filter(d => d.ws === wsKey);
+    const done = items.filter(d => d.status === 'done').length;
+    const active = items.filter(d => d.status === 'active').length;
+    const blocked = items.filter(d => d.status === 'blocked').length;
+    const pct = items.length ? Math.round(done / items.length * 100) : 0;
+    const div = document.createElement('div');
+    div.className = 'ws-progress ' + ws.color;
+    div.innerHTML = `
+      <div class="ws-progress-header">
+        <div class="ws-progress-name">${ws.emoji} ${ws.name}</div>
+        <div class="ws-progress-pct">${pct}%</div>
+      </div>
+      <div class="ws-bar"><div class="ws-bar-fill" style="width:${pct}%"></div></div>
+      <div class="ws-progress-counts">✅ ${done} done · 🟢 ${active} active · 🟡 ${blocked} blocked · ${items.length} total</div>
+    `;
+    progressWrap.appendChild(div);
+  });
+
+  // Next gates
+  const gatesList = document.getElementById('gatesList');
+  const openGates = data.deliverables
+    .filter(d => d.isGate && d.status !== 'done')
+    .sort((a,b) => parseDate(a.due) - parseDate(b.due))
+    .slice(0, 3);
+  if (openGates.length === 0) {
+    gatesList.innerHTML = '<div class="empty-state">No open gates.</div>';
+  } else {
+    openGates.forEach(g => {
+      const el = document.createElement('div');
+      el.className = 'gate-card';
+      el.onclick = () => openModal(g);
+      el.innerHTML = `
+        <div class="gate-header">
+          <div class="gate-id">${g.id}</div>
+          <div class="gate-date">${fmtDateLong(g.due)}</div>
+        </div>
+        <div class="gate-name">${g.name}</div>
+        <div class="gate-owner">Owner: ${g.owner}</div>
+      `;
+      gatesList.appendChild(el);
+    });
+  }
+
+  // Me filter + active list
+  let currentFilter = 'All';
+  const meFilter = document.getElementById('meFilter');
+  data.bandMembers.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m;
+    if (m === 'BAND') btn.setAttribute('data-band', '1');
+    if (m === currentFilter) btn.classList.add('active');
+    btn.onclick = () => {
+      currentFilter = m;
+      document.querySelectorAll('#meFilter button').forEach(b => b.classList.toggle('active', b.textContent === m));
+      renderActive();
+    };
+    meFilter.appendChild(btn);
+  });
+
+  function renderActive(){
+    const list = document.getElementById('activeList');
+    list.innerHTML = '';
+    let items = data.deliverables.filter(d => d.status === 'active' && !d.isGate);
+    if (currentFilter === 'BAND') {
+      // BAND filter: only items owned literally by "BAND"
+      items = items.filter(d => d.owner === 'BAND');
+    } else if (currentFilter !== 'All') {
+      // Individual filter: items owned by that person, but NOT BAND items (pressure individuals to volunteer)
+      items = items.filter(d => {
+        const o = d.owner.toLowerCase();
+        const person = currentFilter.toLowerCase();
+        // match the individual's name in owner string, but exclude pure BAND items
+        return o.includes(person) && d.owner !== 'BAND';
+      });
+    }
+    // 'All' shows everything
+    items.sort((a,b) => parseDate(a.due) - parseDate(b.due));
+    if (items.length === 0) {
+      list.innerHTML = '<div class="empty-state">Nothing active for this filter.</div>';
+      return;
+    }
+    items.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'active-card';
+      el.onclick = () => openModal(d);
+      const daysLeft = daysBetween(today, parseDate(d.due));
+      const isOverdue = daysLeft < 0;
+      const isDueToday = daysLeft === 0;
+      if (isOverdue) el.classList.add('overdue');
+      if (isDueToday) el.classList.add('due-today');
+      const dueText = isOverdue ? '⚠ Overdue ' + Math.abs(daysLeft) + 'd' : isDueToday ? 'Due today' : 'Due in ' + daysLeft + 'd';
+      const dueClass = isOverdue ? 'ac-due overdue' : isDueToday ? 'ac-due due-today' : 'ac-due';
+      el.innerHTML = `
+        <div class="ac-left">
+          <div class="ac-id">${d.id}</div>
+          <div class="ac-name">${d.name}</div>
+        </div>
+        <div class="ac-right">
+          <div class="ac-owner">${d.owner}</div>
+          <div class="${dueClass}">${dueText}</div>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+  renderActive();
+
+  // Update panel is informational only — no JS needed
+
+  // Recent updates
+  const recentList = document.getElementById('recentList');
+  data.recentUpdates.forEach(u => {
+    const el = document.createElement('div');
+    el.className = 'dec-locked';
+    el.innerHTML = `<strong style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">${fmtDate(u.date)}</strong> — ${u.text}`;
+    recentList.appendChild(el);
+  });
+
+  // ============== GANTT ==============
+  const ganttWrap = document.getElementById('ganttWrap');
+  const ganttStart = new Date('2026-04-20T00:00:00');
+  const ganttEnd = new Date('2026-06-17T00:00:00');
+  const totalDays = daysBetween(ganttStart, ganttEnd);
+
+  // Build week scale
+  const weeks = [];
+  let cursor = new Date(ganttStart);
+  while (cursor < ganttEnd) {
+    weeks.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  const labelCol = '260px';
+  const dayCol = 'minmax(8px, 1fr)';
+  const scaleStyle = `grid-template-columns: ${labelCol} repeat(${totalDays}, ${dayCol});`;
+
+  let scaleHTML = `<div class="gantt-scale" style="${scaleStyle}"><div></div>`;
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(ganttStart);
+    d.setDate(d.getDate() + i);
+    if (d.getDay() === 1) { // Monday labels
+      scaleHTML += `<div style="grid-column: span 7">${(d.getMonth()+1)}/${d.getDate()}</div>`;
+      i += 6; // skip the next 6 since we spanned
+    } else if (i === 0) {
+      const remaining = 7 - d.getDay();
+      scaleHTML += `<div style="grid-column: span ${Math.max(1,remaining)}">${(d.getMonth()+1)}/${d.getDate()}</div>`;
+      i += remaining - 1;
+    }
+  }
+  scaleHTML += '</div>';
+
+  ganttWrap.innerHTML = scaleHTML;
+
+  const sortedDlvs = [...data.deliverables].sort((a,b) => parseDate(a.start) - parseDate(b.start));
+
+  sortedDlvs.forEach(d => {
+    const startDate = parseDate(d.start);
+    const endDate = parseDate(d.due);
+    const startCol = Math.max(0, daysBetween(ganttStart, startDate));
+    const endCol = Math.min(totalDays, daysBetween(ganttStart, endDate));
+    const span = Math.max(1, endCol - startCol + 1);
+
+    const row = document.createElement('div');
+    row.className = 'gantt-row';
+    row.style = `grid-template-columns: ${labelCol} repeat(${totalDays}, ${dayCol});`;
+
+    const label = document.createElement('div');
+    label.className = 'gantt-label';
+    label.innerHTML = `<span class="gantt-label-id">${d.id}</span><span class="gantt-label-name">${d.name}</span>`;
+    label.title = `${d.id}: ${d.name}\nOwner: ${d.owner}\nStatus: ${d.status}${d.blockedBy && d.blockedBy.length ? '\nBlocked by: ' + d.blockedBy.join(', ') : ''}`;
+    row.appendChild(label);
+
+    const bar = document.createElement('div');
+    bar.className = `gantt-bar ${data.workstreams[d.ws].color}`;
+    if (d.isGate) bar.classList.add('gate');
+    if (d.status === 'done') bar.classList.add('done');
+    if (d.status === 'blocked') bar.classList.add('blocked');
+    if (d.status === 'scheduled') bar.classList.add('scheduled');
+    // Overdue: due date is before today and not done/killed
+    if (parseDate(d.due) < today && d.status !== 'done' && d.status !== 'killed') bar.classList.add('overdue');
+    bar.style = `grid-column: ${startCol + 2} / span ${d.isGate ? 1 : span};`;
+    bar.title = d.name;
+    bar.onclick = () => openModal(d);
+    row.appendChild(bar);
+
+    // Today line (only on first row)
+    if (d === sortedDlvs[0]) {
+      const todayOffset = daysBetween(ganttStart, today);
+      if (todayOffset >= 0 && todayOffset <= totalDays) {
+        const todayLine = document.createElement('div');
+        todayLine.className = 'gantt-today';
+        todayLine.style = `left: calc(${labelCol} + (100% - ${labelCol}) * ${todayOffset/totalDays});`;
+      }
+    }
+
+    ganttWrap.appendChild(row);
+  });
+
+  // ============== WORKSTREAMS ==============
+  const wsCards = document.getElementById('workstreamCards');
+  Object.keys(data.workstreams).forEach(wsKey => {
+    const ws = data.workstreams[wsKey];
+    const card = document.createElement('div');
+    card.className = `ws-card ${ws.color}`;
+    const items = data.deliverables.filter(d => d.ws === wsKey);
+
+    let body = `<p>${ws.narrative}</p>`;
+    ws.subworkstreams.forEach(sws => {
+      const swsItems = items.filter(d => d.sws === sws.id);
+      const done = swsItems.filter(d => d.status === 'done').length;
+      const total = swsItems.length;
+      body += `<div class="sws">
+        <div class="sws-header">
+          <div class="sws-title">${sws.name}</div>
+          <div class="sws-meta">${done}/${total}</div>
+        </div>
+        <div class="sws-dates">${sws.dates}</div>`;
+
+      swsItems.forEach(d => {
+        const dueText = fmtDate(d.due);
+        const overdue = parseDate(d.due) < today && d.status !== 'done';
+        const blockedText = d.blockedBy.length ? `⛔ blocked by ${d.blockedBy.join(', ')}` : '';
+        body += `<div class="dlv" data-id="${d.id}">
+          <div class="dlv-left">
+            <div class="dlv-id">${d.id}</div>
+            <div class="dlv-name ${d.isGate ? 'gate' : ''}">${d.name}</div>
+            <div class="dlv-blocked">${blockedText}</div>
+          </div>
+          <div class="dlv-right">
+            <div class="dlv-status">${statusIcon(d.status)}</div>
+            <div class="dlv-owner ${ownerClass(d.owner)}">${d.owner}</div>
+            <div class="dlv-due ${overdue ? 'overdue' : ''}">${dueText}</div>
+          </div>
+        </div>`;
+      });
+      body += `</div>`;
+    });
+
+    card.innerHTML = `
+      <div class="ws-card-header">
+        <div class="ws-card-title">${ws.emoji} ${ws.name}</div>
+        <div class="ws-card-caret">▶</div>
+      </div>
+      <div class="ws-card-body">${body}</div>
+    `;
+    card.querySelector('.ws-card-header').onclick = () => card.classList.toggle('expanded');
+    card.querySelectorAll('.dlv').forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        const id = el.getAttribute('data-id');
+        const d = data.deliverables.find(x => x.id === id);
+        if (d) openModal(d);
+      };
+    });
+    wsCards.appendChild(card);
+  });
+
+  // ============== DECISIONS ==============
+  const openGatesListEl = document.getElementById('openGatesList');
+  const openGatesAll = data.deliverables
+    .filter(d => d.isGate && d.status !== 'done')
+    .sort((a,b) => parseDate(a.due) - parseDate(b.due));
+  openGatesAll.forEach(g => {
+    const el = document.createElement('div');
+    el.className = 'gate-card';
+    el.onclick = () => openModal(g);
+    el.innerHTML = `
+      <div class="gate-header">
+        <div class="gate-id">${g.id}</div>
+        <div class="gate-date">${fmtDateLong(g.due)}</div>
+      </div>
+      <div class="gate-name">${g.name}</div>
+      <div class="gate-owner">Owner: ${g.owner}</div>
+    `;
+    openGatesListEl.appendChild(el);
+  });
+
+  // Open (non-gate) decisions: BAND-owned items that aren't gates and aren't done
+  const openDecisionsEl = document.getElementById('openDecisionsList');
+  const openDecisions = data.deliverables
+    .filter(d => d.owner === 'BAND' && !d.isGate && d.status !== 'done' && d.status !== 'killed')
+    .sort((a,b) => parseDate(a.due) - parseDate(b.due));
+  if (openDecisionsEl) {
+    if (openDecisions.length === 0) {
+      openDecisionsEl.innerHTML = '<div class="empty-state">No open non-gate decisions.</div>';
+    } else {
+      openDecisions.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'gate-card';
+        el.onclick = () => openModal(d);
+        el.innerHTML = `
+          <div class="gate-header">
+            <div class="gate-id">${d.id}</div>
+            <div class="gate-date">${fmtDateLong(d.due)}</div>
+          </div>
+          <div class="gate-name">${d.name}</div>
+          <div class="gate-owner">Owner: ${d.owner}</div>
+        `;
+        openDecisionsEl.appendChild(el);
+      });
+    }
+  }
+
+  const lockedListEl = document.getElementById('lockedList');
+  data.lockedDecisions.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'dec-locked';
+    el.textContent = '✅ ' + d;
+    lockedListEl.appendChild(el);
+  });
+
+  // ============== BUDGET & SPEND ==============
+  const budgetTableWrap = document.getElementById('budgetContent');
+  if (budgetTableWrap) {
+    const lines = data.budget.lines || [];
+    const totalBudget = lines.reduce((sum, l) => sum + (l.estimate || 0), 0);
+    const totalSpent = lines.reduce((sum, l) => sum + (l.spent || 0), 0);
+    let rowsHtml = lines.map(l => {
+      const spent = l.spent || 0;
+      const statusLabel = l.status === 'conditional' ? 'Conditional' : (l.status === 'planned' ? 'Planned' : l.status || '');
+      return `<tr>
+        <td>${l.label}</td>
+        <td class="num">$${(l.estimate || 0).toLocaleString()}</td>
+        <td class="num">$${spent.toLocaleString()}</td>
+        <td><span class="budget-status-pill">${statusLabel}</span></td>
+      </tr>`;
+    }).join('');
+    budgetTableWrap.innerHTML = `
+      <table class="budget-table">
+        <thead>
+          <tr><th>Line item</th><th style="text-align:right">Budget</th><th style="text-align:right">Spent to date</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          <tr class="total">
+            <td>Total</td>
+            <td class="num">$${totalBudget.toLocaleString()}</td>
+            <td class="num">$${totalSpent.toLocaleString()}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:8px">Band fund expected: ~$${(data.budget.bandFundExpected || 1200).toLocaleString()}. Delta if short: Cody + Dave cover, or trim.</p>
+    `;
+  }
+
+  // ============== VOLUNTEER ==============
+  const volListEl = document.getElementById('volunteerList');
+  // Only genuine volunteer slots: owner literally "TBD" (exclude "TBD (gate)", "Pearce OR Evan...", "Hire OR DIY...", "TBD (by gate)")
+  const volItems = data.deliverables
+    .filter(d => {
+      const owner = (d.owner || '').trim();
+      if (owner.toUpperCase() !== 'TBD') return false;
+      if (d.status === 'done' || d.status === 'killed') return false;
+      return true;
+    })
+    .sort((a,b) => parseDate(a.due) - parseDate(b.due));
+  if (volItems.length === 0) {
+    volListEl.innerHTML = '<div class="empty-state">All tasks have owners. Nice.</div>';
+  } else {
+    volItems.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'vol-card';
+      el.innerHTML = `
+        <div class="vol-header">
+          <div class="vol-id">${d.id}</div>
+          <div class="vol-due">Due ${fmtDate(d.due)}</div>
+        </div>
+        <div class="vol-name">${d.name}</div>
+      `;
+      volListEl.appendChild(el);
+    });
+  }
+
+  // ============== TAB NAVIGATION ==============
+  document.querySelectorAll('#tabs button').forEach(btn => {
+    btn.onclick = () => {
+      const view = btn.getAttribute('data-view');
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('section.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + view));
+      window.scrollTo(0, 0);
+    };
+  });
+
+  // ============== MODAL ==============
+  window.openModal = function(d){
+    document.getElementById('modalId').textContent = d.id + ' · ' + data.workstreams[d.ws].name + ' / ' + (data.workstreams[d.ws].subworkstreams.find(s => s.id === d.sws) || {name:''}).name;
+    document.getElementById('modalName').textContent = d.name;
+    const blockedByHtml = d.blockedBy.length ? d.blockedBy.map(b => `<code style="font-family:var(--mono);color:var(--yellow);font-size:11px">${b}</code>`).join(', ') : 'Nothing';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-row"><span class="label">Status</span><span>${statusIcon(d.status)} ${d.status}</span></div>
+      <div class="modal-row"><span class="label">Owner</span><span>${d.owner}</span></div>
+      <div class="modal-row"><span class="label">Start</span><span>${fmtDateLong(d.start)}</span></div>
+      <div class="modal-row"><span class="label">Due</span><span>${fmtDateLong(d.due)}</span></div>
+      <div class="modal-row"><span class="label">Blocked by</span><span>${blockedByHtml}</span></div>
+      <div class="modal-row"><span class="label">Gate?</span><span>${d.isGate ? 'Yes' : 'No'}</span></div>
+    `;
+    document.getElementById('modalBg').classList.add('open');
+  };
+  window.closeModal = function(){
+    document.getElementById('modalBg').classList.remove('open');
+  };
+  document.getElementById('modalBg').onclick = (e) => {
+    if (e.target.id === 'modalBg') closeModal();
+  };
+
+})();
+</script>
+
+</body>
+</html>
