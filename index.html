@@ -418,6 +418,135 @@
 <script>
 (function(){
   const data = JSON.parse(document.getElementById('data').textContent);
+
+  // ============== NOTION SYNC ADAPTER ==============
+  // Normalizes contract-shape fields (from Notion sync) back to the internal shape
+  // the renderer was written against. Accepts EITHER shape, so the same file works
+  // before and after the sync script cuts over. Safe to keep indefinitely.
+  (function normalizeFromContract(d){
+    // Workstream display label → internal key
+    const WS_LABEL_TO_KEY = {
+      '🎵 Music': 'music', 'Music': 'music',
+      '🎨 Materials': 'materials', 'Materials': 'materials',
+      '📣 Marketing': 'marketing', 'Marketing': 'marketing'
+    };
+    // Status display label → internal key
+    const STATUS_LABEL_TO_KEY = {
+      '✅ Done': 'done',
+      '🟢 Active': 'active',
+      '🟡 Blocked': 'blocked',
+      '⚪ Scheduled': 'scheduled',
+      '❌ Killed': 'killed'
+    };
+    // Fallback default workstream meta if Notion sync stops emitting it.
+    if (!d.workstreams || typeof d.workstreams !== 'object' || !Object.keys(d.workstreams).length) {
+      d.workstreams = {
+        music: { name:'Music', emoji:'🎵', color:'music', narrative:'', subworkstreams:[
+          {id:'tracking',name:'Tracking',dates:''},
+          {id:'mix',name:'Mix',dates:''},
+          {id:'master',name:'Master',dates:''},
+          {id:'distribution',name:'Distribution',dates:''}
+        ]},
+        materials: { name:'Materials', emoji:'🎨', color:'materials', narrative:'', subworkstreams:[
+          {id:'photos',name:'Photos',dates:''},
+          {id:'albumart',name:'Album Art',dates:''},
+          {id:'video',name:'Video',dates:''},
+          {id:'merch',name:'Merch',dates:''},
+          {id:'epk',name:'EPK',dates:''},
+          {id:'website',name:'Website',dates:''}
+        ]},
+        marketing: { name:'Marketing', emoji:'📣', color:'marketing', narrative:'', subworkstreams:[
+          {id:'social',name:'Social',dates:''},
+          {id:'paidads',name:'Campaign Design + Execution',dates:''},
+          {id:'release',name:'Release Campaign',dates:''}
+        ]}
+      };
+    }
+
+    // Build a subworkstream name→id lookup per workstream key from the meta
+    const swsNameToId = {};
+    Object.keys(d.workstreams).forEach(wsKey => {
+      swsNameToId[wsKey] = {};
+      (d.workstreams[wsKey].subworkstreams || []).forEach(s => {
+        swsNameToId[wsKey][s.name] = s.id;
+        swsNameToId[wsKey][s.id] = s.id;
+      });
+    });
+
+    // Normalize deliverables
+    d.deliverables = (d.deliverables || []).map(item => {
+      const wsRaw = item.workstream !== undefined ? item.workstream : item.ws;
+      const wsKey = WS_LABEL_TO_KEY[wsRaw] || wsRaw || '';
+      const swsRaw = item.subWorkstream !== undefined ? item.subWorkstream : item.sws;
+      let swsId = swsRaw;
+      if (swsNameToId[wsKey] && swsNameToId[wsKey][swsRaw] !== undefined) {
+        swsId = swsNameToId[wsKey][swsRaw];
+      } else if (typeof swsRaw === 'string') {
+        swsId = swsRaw.toLowerCase().replace(/[^a-z0-9]/g, '');
+      }
+
+      const statusRaw = item.status || '';
+      const statusKey = STATUS_LABEL_TO_KEY[statusRaw] || statusRaw;
+
+      let blockedBy = item.blockedBy;
+      if (typeof blockedBy === 'string') {
+        blockedBy = blockedBy.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (!Array.isArray(blockedBy)) blockedBy = [];
+
+      return Object.assign({}, item, {
+        ws: wsKey,
+        sws: swsId,
+        start: item.startDate || item.start,
+        due: item.dueDate || item.due,
+        status: statusKey,
+        blockedBy: blockedBy,
+        isGate: !!item.isGate,
+        owner: item.owner || '',
+        name: item.name || ''
+      });
+    });
+
+    // Normalize bandMembers: object array → string array with All + BAND prepended
+    if (Array.isArray(d.bandMembers) && d.bandMembers.length > 0 && typeof d.bandMembers[0] === 'object') {
+      const names = d.bandMembers.map(m => m && m.name ? m.name : '').filter(Boolean);
+      d.bandMembers = ['All', 'BAND'].concat(names);
+    }
+
+    // Normalize lockedDecisions: object array → string array of the decision text
+    if (Array.isArray(d.lockedDecisions) && d.lockedDecisions.length > 0 && typeof d.lockedDecisions[0] === 'object') {
+      d.lockedDecisions = d.lockedDecisions.map(x => x.decision || x.name || '').filter(Boolean);
+    }
+
+    // Normalize recentUpdates: {headline, details, category} → {date, text}
+    if (Array.isArray(d.recentUpdates)) {
+      d.recentUpdates = d.recentUpdates.map(u => {
+        if (u && u.text) return u;
+        const parts = [];
+        if (u.category) parts.push('[' + u.category + ']');
+        if (u.headline) parts.push(u.headline);
+        if (u.details && u.details !== u.headline) parts.push('— ' + u.details);
+        return { date: u.date, text: parts.join(' ') };
+      });
+    }
+
+    // Normalize budget: {expenses, income} with amountLow/amountHigh → {lines}
+    if (d.budget && (Array.isArray(d.budget.expenses) || Array.isArray(d.budget.income))) {
+      const mapLine = e => ({
+        label: e.label || e.name || '',
+        estimate: (e.estimate !== undefined) ? e.estimate
+                : (e.amountHigh !== undefined) ? e.amountHigh
+                : (e.amountLow !== undefined) ? e.amountLow
+                : 0,
+        spent: e.spent || 0,
+        status: e.status || 'planned'
+      });
+      const expLines = (d.budget.expenses || []).map(mapLine);
+      if (!Array.isArray(d.budget.lines)) d.budget.lines = expLines;
+      if (d.budget.bandFundExpected === undefined) d.budget.bandFundExpected = 1200;
+    }
+  })(data);
+
   const today = new Date();
   today.setHours(0,0,0,0);
   const releaseDate = new Date(data.meta.releaseDate + 'T00:00:00');
