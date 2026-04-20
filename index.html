@@ -507,9 +507,12 @@
       });
     });
 
-    // Normalize bandMembers: object array → string array with All + BAND prepended
+    // Normalize bandMembers: object array → string array with All + BAND prepended.
+    // Use first-name-only for pill labels so the case-insensitive substring match
+    // in renderActive() (owner.includes(person)) works against Notion owners like
+    // "Cody", "Dave", "Cody + Eric Neumann", etc. Keeps pills tidy too.
     if (Array.isArray(d.bandMembers) && d.bandMembers.length > 0 && typeof d.bandMembers[0] === 'object') {
-      const names = d.bandMembers.map(m => m && m.name ? m.name : '').filter(Boolean);
+      const names = d.bandMembers.map(m => m && m.name ? m.name.split(' ')[0] : '').filter(Boolean);
       d.bandMembers = ['All', 'BAND'].concat(names);
     }
 
